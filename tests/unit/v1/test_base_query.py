@@ -1175,6 +1175,26 @@ def test_basequery__normalize_orders_wo_orders_w_snapshot_cursor_w_neq_exists():
     assert query._normalize_orders() == expected
 
 
+def test_basequery__normalize_orders_wo_orders_w_snapshot_cursor_w_eq_exists():
+    # While it can be logical to add an order by "in" operations  it is not
+    #   supported on Firestore side and leeds to the next error:
+    values = {"a": 7, "b": "foo"}
+    docref = _make_docref("here", "doc_id")
+    snapshot = _make_snapshot(docref, values)
+    collection = _make_collection("here")
+    query = (
+        _make_base_query(collection)
+        .where("c", "==", 20)
+        .where("d", "in", [30])
+        .where("e", "array_contains", 40)
+        .start_at(snapshot)
+    )
+    expected = [
+        query._make_order("__name__", "ASCENDING"),
+    ]
+    assert query._normalize_orders() == expected
+
+
 def test_basequery__normalize_orders_wo_orders_w_snapshot_cursor_w_neq_where():
     values = {"a": 7, "b": "foo"}
     docref = _make_docref("here", "doc_id")

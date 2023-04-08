@@ -53,6 +53,8 @@ from typing import (
 # Types needed only for Type Hints
 from google.cloud.firestore_v1.base_document import DocumentSnapshot
 
+_ARRAY_CONTAINS_OP: str
+_BAD_CURSOR_ORDERING_OPERATORS: Tuple[str, ...]
 _BAD_DIR_STRING: str
 _BAD_OP_NAN_NULL: str
 _BAD_OP_STRING: str
@@ -60,6 +62,7 @@ _COMPARISON_OPERATORS: Dict[str, Any]
 _EQ_OP: str
 _INVALID_CURSOR_TRANSFORM: str
 _INVALID_WHERE_TRANSFORM: str
+_IN_OP: str
 _MISMATCH_CURSOR_W_ORDER_BY: str
 _MISSING_ORDER_BY: str
 _NO_ORDERS_FOR_CURSOR: str
@@ -67,6 +70,8 @@ _operator_enum: Any
 
 
 _EQ_OP = "=="
+_IN_OP = "in"
+_ARRAY_CONTAINS_OP = "array_contains"
 _operator_enum = StructuredQuery.FieldFilter.Operator
 _COMPARISON_OPERATORS = {
     "<": _operator_enum.LESS_THAN,
@@ -75,11 +80,12 @@ _COMPARISON_OPERATORS = {
     "!=": _operator_enum.NOT_EQUAL,
     ">=": _operator_enum.GREATER_THAN_OR_EQUAL,
     ">": _operator_enum.GREATER_THAN,
-    "array_contains": _operator_enum.ARRAY_CONTAINS,
-    "in": _operator_enum.IN,
+    _ARRAY_CONTAINS_OP: _operator_enum.ARRAY_CONTAINS,
+    _IN_OP: _operator_enum.IN,
     "not-in": _operator_enum.NOT_IN,
     "array_contains_any": _operator_enum.ARRAY_CONTAINS_ANY,
 }
+_BAD_CURSOR_ORDERING_OPERATORS = (_EQ_OP, _IN_OP, _ARRAY_CONTAINS_OP)
 _BAD_OP_STRING = "Operator string {!r} is invalid. Valid choices are: {}."
 _BAD_OP_NAN_NULL = 'Only an equality filter ("==") can be used with None or NaN values'
 _INVALID_WHERE_TRANSFORM = "Transforms cannot be used as where values."
@@ -852,7 +858,7 @@ class BaseQuery(object):
             should_order = [
                 _enum_from_op_string(key)
                 for key in _COMPARISON_OPERATORS
-                if key not in (_EQ_OP, "array_contains")
+                if key not in _BAD_CURSOR_ORDERING_OPERATORS
             ]
             order_keys = [order.field.field_path for order in orders]
             for filter_ in self._field_filters:
